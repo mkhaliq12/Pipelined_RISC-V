@@ -4,7 +4,7 @@ module rdmux(
     input wire[31:0] alu,
     input wire[31:0] pc,
     input wire[31:0] imm,
-    output reg[31:0] rd
+    output reg[31:0] rd 
 );
 
 always @(*) begin
@@ -12,7 +12,7 @@ always @(*) begin
     2'b00: rd = alu;        //R,IA
     2'b01: rd = dataMem;    //IL
     2'b10: rd = pc + 4;
-    2'b11: rd = imm;
+    2'b11: rd = imm;    	//LUI
     endcase
 
 end

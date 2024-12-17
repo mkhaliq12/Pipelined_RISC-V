@@ -1,7 +1,7 @@
 module datamem(
     input clk,
     input writeEn,
-    input addr,
+    input [31:0]addr,
     input wire[2:0]func3,
     input wire[31:0] storeVal,      //rs2
     output reg[31:0] loadVal
@@ -25,7 +25,7 @@ always@(posedge clk) begin
             mem[addr + 1] = storeVal[15:8];
             end
         
-        3'b000:                //store Half
+        3'b000:                //store Byte
             mem[addr    ] = storeVal[7:0];
         endcase
     end
@@ -34,7 +34,7 @@ end
 always @(*) begin
     case(func3)
     3'b000: loadVal = {{24{mem[addr][7]}}, mem[addr]};    //LB
-    3'b001: loadVal = {{12{mem[addr+1][7]}}, mem[addr + 1], mem[addr]};    //LH
+    3'b001: loadVal = {{16{mem[addr+1][7]}}, mem[addr + 1], mem[addr]};    //LH
     3'b010: loadVal = {mem[addr + 3], mem[addr + 2], mem[addr + 1], mem[addr]};   //LW
     3'b100: loadVal = {24'd0, mem[addr]};    //LBU
     3'b101: loadVal = {12'd0, mem[addr]};    //LHU

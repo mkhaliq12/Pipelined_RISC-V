@@ -1,5 +1,5 @@
 module brnch(
-    input wire [3:0] func3,
+    input wire [2:0] func3,
     input wire signed [31:0] A,
     input wire signed [31:0] B,
     output reg brnchOut);
