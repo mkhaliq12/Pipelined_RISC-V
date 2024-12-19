@@ -90,7 +90,7 @@ Cache State at time 415000:
 Set 0: Valid[0]=1 Tag[0]=0000000 Data[0]=11111112 Age[0]=0
       Valid[1]=1 Tag[1]=0000040 Data[1]=22222222 Age[1]=4
 Set 1: Valid[0]=1 Tag[0]=0000000 Data[0]=11111112 Age[0]=0
-      Valid[1]=0 Tag[1]=0000000 Data[1]=00000000 Age[1]=4
+      Valid[1]=0 Tag[1]=0000000 Data[1]=00000000 Age[1]=3
 Set 2: Valid[0]=0 Tag[0]=0000000 Data[0]=00000000 Age[0]=0
       Valid[1]=0 Tag[1]=0000000 Data[1]=00000000 Age[1]=0
 Set 3: Valid[0]=0 Tag[0]=0000000 Data[0]=00000000 Age[0]=0
@@ -103,7 +103,7 @@ Cache State at time 455000:
 Set 0: Valid[0]=1 Tag[0]=0000000 Data[0]=11111112 Age[0]=0
       Valid[1]=1 Tag[1]=0000040 Data[1]=22222222 Age[1]=4
 Set 1: Valid[0]=1 Tag[0]=0000000 Data[0]=22222223 Age[0]=0
-      Valid[1]=0 Tag[1]=0000000 Data[1]=00000000 Age[1]=7
+      Valid[1]=0 Tag[1]=0000000 Data[1]=00000000 Age[1]=6
 Set 2: Valid[0]=0 Tag[0]=0000000 Data[0]=00000000 Age[0]=0
       Valid[1]=0 Tag[1]=0000000 Data[1]=00000000 Age[1]=0
 Set 3: Valid[0]=0 Tag[0]=0000000 Data[0]=00000000 Age[0]=0
@@ -159,7 +159,7 @@ Set 0: Valid[0]=1 Tag[0]=0000000 Data[0]=11111112 Age[0]=0
 Set 1: Valid[0]=1 Tag[0]=0000000 Data[0]=11111113 Age[0]=0
       Valid[1]=1 Tag[1]=0000040 Data[1]=22222223 Age[1]=4
 Set 2: Valid[0]=1 Tag[0]=0000000 Data[0]=11111113 Age[0]=0
-      Valid[1]=0 Tag[1]=0000000 Data[1]=00000000 Age[1]=4
+      Valid[1]=0 Tag[1]=0000000 Data[1]=00000000 Age[1]=3
 Set 3: Valid[0]=0 Tag[0]=0000000 Data[0]=00000000 Age[0]=0
       Valid[1]=0 Tag[1]=0000000 Data[1]=00000000 Age[1]=0
 
@@ -172,7 +172,7 @@ Set 0: Valid[0]=1 Tag[0]=0000000 Data[0]=11111112 Age[0]=0
 Set 1: Valid[0]=1 Tag[0]=0000000 Data[0]=11111113 Age[0]=0
       Valid[1]=1 Tag[1]=0000040 Data[1]=22222223 Age[1]=4
 Set 2: Valid[0]=1 Tag[0]=0000000 Data[0]=22222224 Age[0]=0
-      Valid[1]=0 Tag[1]=0000000 Data[1]=00000000 Age[1]=7
+      Valid[1]=0 Tag[1]=0000000 Data[1]=00000000 Age[1]=6
 Set 3: Valid[0]=0 Tag[0]=0000000 Data[0]=00000000 Age[0]=0
       Valid[1]=0 Tag[1]=0000000 Data[1]=00000000 Age[1]=0
 
@@ -228,7 +228,7 @@ Set 1: Valid[0]=1 Tag[0]=0000000 Data[0]=11111113 Age[0]=0
 Set 2: Valid[0]=1 Tag[0]=0000000 Data[0]=11111114 Age[0]=0
       Valid[1]=1 Tag[1]=0000040 Data[1]=22222224 Age[1]=4
 Set 3: Valid[0]=1 Tag[0]=0000000 Data[0]=11111114 Age[0]=0
-      Valid[1]=0 Tag[1]=0000000 Data[1]=00000000 Age[1]=4
+      Valid[1]=0 Tag[1]=0000000 Data[1]=00000000 Age[1]=3
 
 Operation complete after 0 cycles
 Hit: 1, Read Data: 11111114
@@ -241,7 +241,7 @@ Set 1: Valid[0]=1 Tag[0]=0000000 Data[0]=11111113 Age[0]=0
 Set 2: Valid[0]=1 Tag[0]=0000000 Data[0]=11111114 Age[0]=0
       Valid[1]=1 Tag[1]=0000040 Data[1]=22222224 Age[1]=4
 Set 3: Valid[0]=1 Tag[0]=0000000 Data[0]=22222225 Age[0]=0
-      Valid[1]=0 Tag[1]=0000000 Data[1]=00000000 Age[1]=7
+      Valid[1]=0 Tag[1]=0000000 Data[1]=00000000 Age[1]=6
 
 Operation complete after 0 cycles
 Hit: 1, Read Data: 22222225
@@ -847,7 +847,7 @@ Hit: 1, Read Data: 12345678
 
 Cache State at time 2695000:
 Set 0: Valid[0]=1 Tag[0]=0000004 Data[0]=12345678 Age[0]=0
-      Valid[1]=1 Tag[1]=000001c Data[1]=eeeeeeee Age[1]=4
+      Valid[1]=1 Tag[1]=000001c Data[1]=eeeeeeee Age[1]=3
 Set 1: Valid[0]=1 Tag[0]=0000000 Data[0]=cccc0001 Age[0]=4
       Valid[1]=1 Tag[1]=0000080 Data[1]=aaaa0002 Age[1]=0
 Set 2: Valid[0]=1 Tag[0]=0000000 Data[0]=cccc0002 Age[0]=4
@@ -860,7 +860,7 @@ Hit: 1, Read Data: 12345678
 
 Cache State at time 2735000:
 Set 0: Valid[0]=1 Tag[0]=0000004 Data[0]=90abcdef Age[0]=0
-      Valid[1]=1 Tag[1]=000001c Data[1]=eeeeeeee Age[1]=7
+      Valid[1]=1 Tag[1]=000001c Data[1]=eeeeeeee Age[1]=6
 Set 1: Valid[0]=1 Tag[0]=0000000 Data[0]=cccc0001 Age[0]=4
       Valid[1]=1 Tag[1]=0000080 Data[1]=aaaa0002 Age[1]=0
 Set 2: Valid[0]=1 Tag[0]=0000000 Data[0]=cccc0002 Age[0]=4
@@ -873,7 +873,7 @@ Hit: 1, Read Data: 90abcdef
 
 Cache State at time 2775000:
 Set 0: Valid[0]=1 Tag[0]=0000004 Data[0]=90abcdef Age[0]=0
-      Valid[1]=1 Tag[1]=000001c Data[1]=eeeeeeee Age[1]=2
+      Valid[1]=1 Tag[1]=000001c Data[1]=eeeeeeee Age[1]=1
 Set 1: Valid[0]=1 Tag[0]=0000000 Data[0]=cccc0001 Age[0]=4
       Valid[1]=1 Tag[1]=0000080 Data[1]=aaaa0002 Age[1]=0
 Set 2: Valid[0]=1 Tag[0]=0000000 Data[0]=cccc0002 Age[0]=4
