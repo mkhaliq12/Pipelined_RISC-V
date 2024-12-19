@@ -103,13 +103,24 @@ alumux2 Alumux2(
     .aluIn2(A2)
 );
 
-datamem DataMem(
+// datamem DataMem(
+//     .clk(clk),
+//     .writeEn(DMwriteEn),
+//     .addr(aluOut),
+//     .func3(instr[14:12]),
+//     .storeVal(rs2),
+//     .loadVal(dmLoad)
+// );
+wire cache_hit, cache_busy;
+cache datacache(
     .clk(clk),
-    .writeEn(DMwriteEn),
     .addr(aluOut),
+    .write_data(rs2),
+    .write_en(DMwriteEn),
     .func3(instr[14:12]),
-    .storeVal(rs2),
-    .loadVal(dmLoad)
+    .read_data(dmLoad),
+    .hit(cache_hit),
+    .busy(cache_busy)
 );
 
 brnch brnch1(
