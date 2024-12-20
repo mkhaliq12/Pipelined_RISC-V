@@ -16,6 +16,9 @@ reg [25:0] tags [3:0][1:0];      // 26-bit tags
 reg [31:0] data [3:0][1:0];      // 32-bit data
 reg [2:0] age [3:0][1:0];        // LRU counter (3-bit)
 
+// Add hit counter
+reg [31:0] hit_count;
+
 // State machine
 reg [1:0] state;
 localparam IDLE = 2'b00;
@@ -49,6 +52,7 @@ initial begin
     hit = 0;
     mem_write_en = 0;
     read_data = 0;
+    hit_count = 0;
 end
 
 // Memory interface
@@ -71,6 +75,7 @@ always @(posedge clk or posedge reset) begin
         hit <= 0;
         mem_write_en <= 0;
         read_data <= 0;
+        hit_count <= 0;
         for(i = 0; i < 4; i = i + 1) begin
             for(j = 0; j < 2; j = j + 1) begin
                 valid[i][j] <= 0;
@@ -90,6 +95,7 @@ always @(posedge clk or posedge reset) begin
                 if (addr_valid) begin
                     // Check both ways for hit
                     if (valid[set_index][0] && tags[set_index][0] == tag) begin
+                        hit_count <= hit_count + 1;
                         hit <= 1;
                         read_data <= data[set_index][0];
                         age[set_index][0] <= 0;
@@ -103,6 +109,7 @@ always @(posedge clk or posedge reset) begin
                         end
                     end
                     else if (valid[set_index][1] && tags[set_index][1] == tag) begin
+                        hit_count <= hit_count + 1;
                         hit <= 1;
                         read_data <= data[set_index][1];
                         age[set_index][1] <= 0;

@@ -21,14 +21,15 @@ wire rdEn, DMwriteEn, pcloadEn, branch;
 
 wire[31:0] t6;
 
-
+wire cache_hit, cache_Busy;
+wire processor_stall = cache_Busy;
 
 controlUnit CU1(
     .opcode(instr[6:0]),
     .func3(instr[14:12]),
     .func7(instr[30]),
     .brnch(branch),
-
+    .cache_busy(cache_Busy),
     .aluCont(alucont),
     .rdEn(rdEn),
     .DMwriteEn(DMwriteEn),
@@ -45,14 +46,14 @@ imm imm1(
     .imm(imm)
 );
 
+// Modify program counter to respect cache stalls
 pc counter(
     .clk(clk),
     .reset(reset),
-    .enl(pcloadEn),
+    .enl(pcloadEn & ~processor_stall),  // Stall PC when cache is busy
     .load(aluOut),
     .count(count)
 );
-
 
 programMem progmem(
     .address(count),
@@ -103,24 +104,17 @@ alumux2 Alumux2(
     .aluIn2(A2)
 );
 
-// datamem DataMem(
-//     .clk(clk),
-//     .writeEn(DMwriteEn),
-//     .addr(aluOut),
-//     .func3(instr[14:12]),
-//     .storeVal(rs2),
-//     .loadVal(dmLoad)
-// );
-wire cache_hit, cache_busy;
+// Remove old datamem instantiation and replace with cache
 cache datacache(
     .clk(clk),
+    .reset(reset),    // Add missing reset signal
     .addr(aluOut),
     .write_data(rs2),
     .write_en(DMwriteEn),
     .func3(instr[14:12]),
     .read_data(dmLoad),
     .hit(cache_hit),
-    .busy(cache_busy)
+    .busy(cache_Busy)
 );
 
 brnch brnch1(
@@ -132,9 +126,5 @@ brnch brnch1(
 
 
 assign out = t6[18:0];
-
-
-
-
 
 endmodule
