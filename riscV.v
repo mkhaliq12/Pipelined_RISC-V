@@ -21,12 +21,37 @@ wire rdEn, DMwriteEn, pcloadEn, branch;
 
 wire[31:0] t6;
 
+//pipeline 
+wire pip_en;
+wire [31:0] instr_p;
+wire[31:0] rs1_p, rs2_p, imm_p;
+wire [4:0] rs1_ad_p, rs2_ad_p, rd_ad_p;
+
+wire rdEn_p, rdEn_p2;
+wire DMwriteEn_p, DMwriteEn_p2;
+wire [3:0] aluCont_p;
+wire aluMux1Sel_p, aluMux2sel_p;
+
+wire[1:0] rdMuxsel_p;
+
+
+programMem progmem(
+    .address(count),
+    .ins(instr)
+);
+
+pip_fetch_dec p1(
+    .clk(clk),
+    .pip_en(pip_en),
+    .instr(instr),
+    .instr_p(instr_p)
+);
 
 
 controlUnit CU1(
-    .opcode(instr[6:0]),
-    .func3(instr[14:12]),
-    .func7(instr[30]),
+    .opcode(instr_p[6:0]),
+    .func3(instr_p[14:12]),
+    .func7(instr_p[30]),
     .brnch(branch),
 
     .aluCont(alucont),
@@ -40,9 +65,51 @@ controlUnit CU1(
 );
 
 imm imm1(
-    .ins(instr),
+    .ins(instr_p),
     .cont(immsel),
     .imm(imm)
+);
+
+
+pip_dec_ex decode_execute_pipeline (
+    .clk(clk),                 
+    .pip_en(pip_en), 
+    
+    // Input connections
+    .rs1_ad(instr_p[19:15]), 
+    .rs2_ad(instr_p[24:20]),  
+    .rd_ad(instr_p[11:7]), 
+    .rs1(rs1), 
+    .rs2(rs2), 
+    .imm(imm),
+    
+    // ALU control signals
+    .aluCont(aluCont),     
+    .rdmuxSel(rd_mux_select),
+    .alumux1sel(alumux1sel),
+    .alumux2sel(alumux2sel),
+    
+    // Memory and writeback signals
+    .DMwriteEn(DMwriteEn),
+    .rdEn(rdEn),
+    
+    // Output connections
+    .rs1_ad_p(rs1_ad_p),
+    .rs2_ad_p(rs2_ad_p),
+    .rd_ad_p(rd_ad_p),
+    .rs1_p(rs1_p),
+    .rs2_p(rs2_p), 
+    .imm_p(imm_p),
+    
+    // ALU control signals to execute stage
+    .aluCont_p(aluCont_p),
+    .rdmuxSel_p(rd_mux_select_ex),
+    .alumux1sel_p(alumux1sel_p),
+    .alumux2sel_p(alumux2sel_p),
+    
+    // Memory and writeback signals to execute stage
+    .DMwriteEn_p(DMwriteEn_p),
+    .rdEn_p(rdEn_p)
 );
 
 pc counter(
@@ -54,10 +121,7 @@ pc counter(
 );
 
 
-programMem progmem(
-    .address(count),
-    .ins(instr)
-);
+
 
 regFile regfile(
     .clk(clk),
