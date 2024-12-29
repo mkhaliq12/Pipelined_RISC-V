@@ -1,7 +1,8 @@
-module two_bit_predictor (
+module branchpredictor (
     input wire clk,
     input wire rst,
-    input wire branch_outcome,    // Input: Was branch taken? (1: taken, 0: not taken)
+    input wire mispredicted,      // Input: 1 if a misprediction occurred, 0 otherwise
+    input wire update_en,         // Input: Enable signal to update the predictor
     output wire prediction        // Output: Predict next branch (1: taken, 0: not taken)
 );
 
@@ -22,16 +23,16 @@ module two_bit_predictor (
         if (rst) begin
             state <= WEAKLY_NOT_TAKEN;  // Initialize to weakly not taken
         end
-        else begin
+        else if (update_en) begin
             case (state)
                 STRONGLY_NOT_TAKEN: 
-                    state <= branch_outcome ? WEAKLY_NOT_TAKEN : STRONGLY_NOT_TAKEN;
+                    state <= mispredicted ? WEAKLY_NOT_TAKEN : STRONGLY_NOT_TAKEN;
                 WEAKLY_NOT_TAKEN:   
-                    state <= branch_outcome ? WEAKLY_TAKEN : STRONGLY_NOT_TAKEN;
+                    state <= mispredicted ? WEAKLY_TAKEN : STRONGLY_NOT_TAKEN;
                 WEAKLY_TAKEN:       
-                    state <= branch_outcome ? STRONGLY_TAKEN : WEAKLY_NOT_TAKEN;
+                    state <= mispredicted ? WEAKLY_NOT_TAKEN : STRONGLY_TAKEN;
                 STRONGLY_TAKEN:     
-                    state <= branch_outcome ? STRONGLY_TAKEN : WEAKLY_TAKEN;
+                    state <= mispredicted ? WEAKLY_TAKEN : STRONGLY_TAKEN;
             endcase
         end
     end

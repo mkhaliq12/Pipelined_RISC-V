@@ -1,6 +1,7 @@
 module pip_dec_ex (
     input clk,
     input pip_en,
+    input discard,
 
     //register addresses
     input [4:0] rs1_ad,
@@ -22,6 +23,8 @@ module pip_dec_ex (
     input rdEn,
     input rs1_read,
     input rs2_read,
+    input branch_comm,
+    input branch_taken,
 
     //register addresses
     output reg [4:0] rs1_ad_p,
@@ -40,13 +43,15 @@ module pip_dec_ex (
     output reg DMwriteEn_p,
     output reg DMread_p,
     output reg [2:0] DM_ctrl_p,
-    output reg rdEn_p
+    output reg rdEn_p,
     output reg rs1_read_p,
-    output reg rs2_read_p
+    output reg rs2_read_p,
+    output reg branch_comm_p,
+    output reg branch_taken_p,
 );
 
 always @(posedge clk) begin
-    if (pip_en) begin
+    if (pip_en && !discard) begin
         // Register addresses
         rs1_ad_p <= rs1_ad;
         rs2_ad_p <= rs2_ad;
@@ -70,7 +75,35 @@ always @(posedge clk) begin
         rdEn_p <= rdEn;
         rs1_read_p <= rs1_read;
         rs2_read_p <= rs2_read;
+        branch_taken_p <= branch_taken;
+        branch_comm_p <= branch_comm;
+        
     end
+
+    else if (pip_en && discard) begin
+        rs1_ad_p <= 0;
+        rs2_ad_p <= 0;
+        rd_ad_p <= 0;
+        
+        rs1_p <= 0;
+        rs2_p <= 0;
+        imm_p <= 0;
+        
+        aluCont_p <= 0;
+        rdmuxSel_p <= 0;
+        alumux1sel_p <= 0;
+        alumux2sel_p <= 0;
+        
+        DMwriteEn_p <= 0;
+        DMread_p <= 0;
+        DM_ctrl_p <= 0; 
+        rdEn_p <= 0;
+        rs1_read_p <= 0;
+        rs2_read_p <= 0;
+        branch_taken_p <= 0;
+        branch_comm_p <= 0;
+    end
+
 end
 
 endmodule

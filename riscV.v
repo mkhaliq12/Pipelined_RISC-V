@@ -8,6 +8,7 @@ wire[31:0] instr;
 wire[31:0] rd, rs1, rs2, imm;
 wire[31:0] aluOut, count, dmLoad;
 wire[31:0] A1, A2;
+wire [31:0] pcload;
 
 wire[2:0] immsel;
 
@@ -17,7 +18,7 @@ wire aluMux2sel;
 
 wire rdmuxSel;
 
-wire rdEn, DMwriteEn, DMread, pcloadEn, branch, rs1_read, rs2_read;
+wire rdEn, DMwriteEn, DMread, pcloadEn, branch, rs1_read, rs2_read, jump;
 
 wire[31:0] t6;
 
@@ -43,7 +44,10 @@ wire rdmuxSel_p, rdmuxSel_p2;
 
 wire [31:0] alu_out_p;
 wire [31:0] rd_p;
+wire branch_comm_p;
+wire branch_taken_p;
 
+wire p1flush, p2flush;
 
 programMem progmem(
     .address(count),
@@ -53,6 +57,7 @@ programMem progmem(
 pip_fetch_dec p1(
     .clk(clk),
     .pip_en(pip_en),
+    .discard(p1flush),
     .instr(instr),
     .instr_p(instr_p)
 );
@@ -62,7 +67,8 @@ controlUnit CU1(
     .opcode(instr_p[6:0]),
     .func3(instr_p[14:12]),
     .func7(instr_p[30]),
-    .brnch(branch),
+    .branch(branch),
+    .jump(jump),
 
     .aluCont(alucont),
     .rdEn(rdEn),
@@ -70,7 +76,7 @@ controlUnit CU1(
     .rs2_read(rs2_read),
     .DMwriteEn(DMwriteEn),
     .DMread(DMread),
-    .pcloadEn(pcloadEn),
+    // .pcloadEn(pcloadEn),
     .rdmuxSel(rdmuxSel),
     .alumux1sel(aluMux1Sel),
     .alumux2sel(aluMux2sel),
@@ -87,6 +93,7 @@ imm imm1(
 pip_dec_ex p2 (
     .clk(clk),                 
     .pip_en(pip_en), 
+    .discard(p2flush),
     
     // Input connections
     .rs1_ad(instr_p[19:15]), 
@@ -109,6 +116,8 @@ pip_dec_ex p2 (
     .rdEn(rdEn),
     .rs1_read(rs1_read),
     .rs2_read(rs2_read),    
+    .branch_comm(),
+    .branch_taken(),
     
     // Output connections
     .rs1_ad_p(rs1_ad_p),
@@ -128,16 +137,18 @@ pip_dec_ex p2 (
     .DMwriteEn_p(DMwriteEn_p),
     .DMread_p(DMread_p),
     .DM_ctrl_p(DM_ctrl_p),
-    .rdEn_p(rdEn_p)
+    .rdEn_p(rdEn_p),
     .rs1_read_p(rs1_read_p),
-    .rs2_read_p(rs2_read_p)    
+    .rs2_read_p(rs2_read_p),
+    .branch_comm_p(),
+    .branch_taken_p()    
 );
 
 pc counter(
     .clk(clk),
     .reset(reset),
     .enl(pcloadEn),
-    .load(aluOut),
+    .load(pcload),
     .count(count)
 );
 
@@ -172,14 +183,14 @@ alu Alu(
 //     .aluIn1(A1)
 // );
 
-alumux2 Alumux2(    //correct
+mux2to1 Alumux2(    //correct
     .sel(aluMux2sel_p),
-    .rs2(A2F),
-    .imm(imm_p),
-    .aluIn2(A2)
+    .A(A2F),
+    .B(imm_p),
+    .Out(A2)
 );
 
-aluFmux f1(
+mux4to1 f1(
     .sel(ForwardA),
     .A(rs1_p),
     .B(rd_p),
@@ -187,7 +198,7 @@ aluFmux f1(
     .out(A1)
 );
 
-aluFmux f2(
+mux4to1 f2(
     .sel(ForwardB),
     .A(rs2_p),
     .B(rd_p),
@@ -229,7 +240,7 @@ pip_ex_mem p3(
     .DMwriteEn(DMwriteEn_p), 
     .DMread(DMread_p),  
     .rdEn(rdEn_p),
-    .rdmuxSel(rdmuxSel_p) 
+    .rdmuxSel(rdmuxSel_p), 
     
     // Outputs to Memory stage
     .alu_out_p(alu_out_p), 
@@ -246,11 +257,11 @@ pip_ex_mem p3(
     .rdmuxSel_p(rdmuxSel_p2)   
 );
 
-dmemFmux f3(
+mux2to1 f3(
     .sel(ForwardC),
     .A(rs2_p2),
     .B(rd_p),
-    .out(toDmem)
+    .Out(toDmem)
 );
 
 wire [31:0] toDmem;
@@ -264,25 +275,24 @@ datamem DataMem(        //fix
     .loadVal(dmLoad)
 );
 
-rdmux rdMux(
+mux2to1 rdMux(
     .sel(rdmuxSel_p2),
-    .dataMem(dmLoad),
-    .alu(alu_out_p),
+    .A(alu_out_p),
+    .B(dmLoad),
     //.pc(count),
     //.imm(imm),
-    .rd(rd)
+    .Out(rd)
 );
 
 pip_mem_wb p4 (
     .clk(clk),
-    
     .rd(rd),
     
     .rs1_ad(rs1_ad_p2),
     .rs2_ad(rs2_ad_p2),
     .rd_ad(rd_ad_p2),
     .rdEn(rdEn_p2),
-    .DMread(DMread_p2)
+    .DMread(DMread_p2),
     
     .rd_p(rd_p),
     
@@ -294,13 +304,45 @@ pip_mem_wb p4 (
 );
 
 
-brnch brnch1(
-    .func3(instr[14:12]),
-    .A(rs1),
-    .B(rs2),
-    .brnchOut(branch)
+branchresolve brnch1(   //in EX stage
+    .func3(DM_ctrl_p), 
+    .A(A1),
+    .B(A2F),
+    .branch_taken(branch_taken_p),
+    .branch_comm(branch_comm_p),    
+    .misprediction(mispredicted)        //out
 );
 
+
+pip_ctrl pctrl(
+    .branch_taken(pcloadEn),
+    .branch_mispredicted(mispredicted),
+    .flush_fetch_dec(p1flush),
+    .flush_dec_ex(p2flush)
+);
+
+branch b1(
+    .branch_comm(branch),
+    .prediction(prediction),
+    .jump(jump),
+    .prev_mispredicted(mispredicted),   //input
+    .PC(count),
+    .imm(imm),
+    .takebranch(pcloadEn),              //out
+    .next_add(pcload)
+
+);
+
+wire prediction;
+wire mispredicted;
+
+branchpredictor bp(     //in Dec stage
+    .clk(clk),
+    .rst(reset),
+    .mispredicted(mispredicted),    //input
+    .update_en(branch_comm_p),       //branch command
+    .prediction(prediction)         //output
+);
 
 assign out = t6[18:0];
 

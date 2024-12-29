@@ -2,7 +2,6 @@ module controlUnit(
     input wire[6:0]opcode,
     input wire[2:0]func3,
     input wire func7,
-    input wire brnch,
 
     output reg[3:0] aluCont,
     output reg rdEn,
@@ -10,11 +9,13 @@ module controlUnit(
     output reg rs2_read,
     output reg DMwriteEn,
     output reg DMread,
-    output reg pcloadEn,
+    //output reg pcloadEn,
     output reg rdmuxSel,
     output reg alumux1sel,
     output reg alumux2sel,
-    output reg[2:0]imm   
+    output reg[2:0]imm,
+    output reg branch,
+    output reg jump   
     );
 
 
@@ -32,7 +33,8 @@ always@(*) begin
         rdmuxSel = 0; //2'b00;
         alumux1sel  = 0;
         alumux2sel = 0;
-        pcloadEn = 0;
+        branch = 0;
+        jump = 0;
     end
 
     7'b0010011: begin    //I Arithmetic/logic
@@ -49,7 +51,8 @@ always@(*) begin
         rdmuxSel = 0; //2'b00;
         alumux1sel  = 0;
         alumux2sel = 1;
-        pcloadEn = 0;
+        branch = 0;
+        jump = 0;
     end
 
     7'b0000011: begin    //I load
@@ -63,7 +66,8 @@ always@(*) begin
         rdmuxSel = 1;  //2'b01;
         alumux1sel  = 0;
         alumux2sel = 1;
-        pcloadEn = 0;
+        branch = 0;
+        jump = 0;
     end
 
     7'b0100011: begin    //S
@@ -77,8 +81,8 @@ always@(*) begin
         rdmuxSel = 0;  //2'b00;
         alumux1sel  = 0;
         alumux2sel = 1;
-        pcloadEn = 0;
-        
+        branch = 0;
+        jump = 0;
     end
 
     7'b1100011: begin    //B
@@ -92,8 +96,8 @@ always@(*) begin
         rdmuxSel = 0;  //2'b00;
         alumux1sel  = 1;
         alumux2sel = 1;
-        if (brnch)
-            pcloadEn = 1;
+        branch = 1;
+        jump = 0;
     end
 
     7'b1101111: begin    //J
@@ -107,7 +111,8 @@ always@(*) begin
         rdmuxSel = 0;  //2'b10;
         alumux1sel  = 1;
         alumux2sel = 1;
-        pcloadEn = 1;
+        branch = 0;
+        jump = 1;
     end
 
     7'b1100111: begin    //I JALR
@@ -121,7 +126,8 @@ always@(*) begin
         rdmuxSel = 0;  //2'b10;
         alumux1sel  = 0;
         alumux2sel = 1;
-        pcloadEn = 1;
+        branch = 0;
+        jump = 1;
     end
 
     7'b0110111: begin    //U LUI
@@ -135,7 +141,8 @@ always@(*) begin
         rdmuxSel = 0;  //2'b11;
         alumux1sel  = 0;
         alumux2sel = 0;
-        pcloadEn = 0;
+        branch = 0;
+        jump = 0;
     end
 
     7'b0010111: begin    //U AUIPC
@@ -149,8 +156,25 @@ always@(*) begin
         rdmuxSel = 0;  //2'b00;
         alumux1sel  = 1;
         alumux2sel = 1;
-        pcloadEn = 0;
+        branch = 0;
+        jump = 0;
     end
+
+    default: begin    // default
+        aluCont = 4'b0000;
+        rdEn = 0;
+        rs1_read = 0;
+        rs2_read = 0;
+        DMwriteEn = 0;
+        DMread = 0;
+        imm = 3'b0; 
+        rdmuxSel = 0;
+        alumux1sel  = 0;
+        alumux2sel = 0;
+        branch = 0;
+        jump = 0;
+    end
+
     endcase
 
 end

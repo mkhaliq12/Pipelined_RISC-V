@@ -365,6 +365,14 @@
                 "date": "12/29/2024, 6:27:48 PM",
                 "delay": 0,
                 "metadata": {}
+            },
+            {
+                "role": "user",
+                "username": "Mehboob Khaliq",
+                "content": "write code for pipeline control\n",
+                "date": "12/29/2024, 10:17:23 PM",
+                "delay": 0,
+                "metadata": {}
             }
         ]
     },
@@ -407,6 +415,165 @@
                 "delay": 19.7,
                 "metadata": {
                     "action": "update",
+                    "vendor": null,
+                    "topic": [],
+                    "anchor": []
+                }
+            }
+        ]
+    },
+    "/datamem.v": {
+        "/datamem.v+General": [
+            {
+                "role": "user",
+                "username": "Mehboob Khaliq",
+                "content": "are you working?",
+                "date": "12/29/2024, 10:44:28 PM",
+                "delay": 0,
+                "metadata": {}
+            },
+            {
+                "role": "assistant",
+                "username": "RapidGPT",
+                "content": "Hello Mehboob! Yes, I am working and ready to assist you. Is there anything specific you'd like help with regarding hardware engineering or the Verilog code you have open in your editor? I'd be happy to answer any questions or provide guidance on your project.",
+                "date": "12/29/2024, 10:44:39 PM",
+                "delay": 6.2,
+                "metadata": {
+                    "action": "general",
+                    "vendor": null,
+                    "topic": [],
+                    "anchor": []
+                }
+            }
+        ]
+    },
+    "/branchresolve.v": {
+        "/branchresolve.v+General": [
+            {
+                "role": "user",
+                "username": "Mehboob Khaliq",
+                "content": "write code for a pipeline control mechanism",
+                "date": "12/29/2024, 10:46:36 PM",
+                "delay": 0,
+                "metadata": {}
+            },
+            {
+                "role": "assistant",
+                "username": "RapidGPT",
+                "content": "Certainly, Mehboob! I'd be happy to help you write code for a pipeline control mechanism. Based on the RISC-V processor design you're working on, as evident from the \"riscV.v\" file, I'll create a pipeline control mechanism that fits into your existing architecture. \n\nFirst, let's define what we want our pipeline control mechanism to do:\n\n1. Handle data hazards through forwarding\n2. Implement pipeline stalling when necessary\n3. Manage control signals across pipeline stages\n\nHere's a Verilog module for a pipeline control unit that you can integrate into your existing RISC-V design:\n\n```verilog\nmodule pipeline_control (\n    input wire clk,\n    input wire reset,\n    \n    // Instruction decode stage signals\n    input wire [31:0] instruction,\n    input wire [4:0] rs1_addr,\n    input wire [4:0] rs2_addr,\n    \n    // Execute stage signals\n    input wire [4:0] ex_rd_addr,\n    input wire ex_reg_write,\n    input wire [31:0] ex_alu_result,\n    \n    // Memory stage signals\n    input wire [4:0] mem_rd_addr,\n    input wire mem_reg_write,\n    input wire [31:0] mem_result,\n    \n    // Writeback stage signals\n    input wire [4:0] wb_rd_addr,\n    input wire wb_reg_write,\n    \n    // Control outputs\n    output reg [1:0] forward_a,\n    output reg [1:0] forward_b,\n    output reg stall_pipeline,\n    output reg flush_pipeline\n);\n\n    // Forwarding logic\n    always @(*) begin\n        // Forward A\n        if (ex_reg_write && (ex_rd_addr != 0) && (ex_rd_addr == rs1_addr))\n            forward_a = 2'b10;  // Forward from EX stage\n        else if (mem_reg_write && (mem_rd_addr != 0) && (mem_rd_addr == rs1_addr))\n            forward_a = 2'b01;  // Forward from MEM stage\n        else\n            forward_a = 2'b00;  // No forwarding\n\n        // Forward B\n        if (ex_reg_write && (ex_rd_addr != 0) && (ex_rd_addr == rs2_addr))\n            forward_b = 2'b10;  // Forward from EX stage\n        else if (mem_reg_write && (mem_rd_addr != 0) && (mem_rd_addr == rs2_addr))\n            forward_b = 2'b01;  // Forward from MEM stage\n        else\n            forward_b = 2'b00;  // No forwarding\n    end\n\n    // Stall and flush logic\n    wire load_use_hazard;\n    assign load_use_hazard = (ex_rd_addr != 0) && \n                             ((ex_rd_addr == rs1_addr) || (ex_rd_addr == rs2_addr)) &&\n                             (instruction[6:0] == 7'b0000011);  // LOAD instruction opcode\n\n    always @(*) begin\n        if (load_use_hazard) begin\n            stall_pipeline = 1'b1;\n            flush_pipeline = 1'b0;\n        end else begin\n            stall_pipeline = 1'b0;\n            flush_pipeline = 1'b0;\n        end\n    end\n\nendmodule\n```\n\nThis pipeline control module does the following:\n\n1. Implements forwarding logic for both operands (A and B) to resolve data hazards.\n2. Detects load-use hazards and generates stall signals when necessary.\n3. Provides control signals for forwarding (forward_a and forward_b), stalling (stall_pipeline), and flushing (flush_pipeline) the pipeline.\n\nTo integrate this into your existing RISC-V design:\n\n1. Instantiate this module in your top-level \"riscV\" module.\n2. Connect the appropriate signals from your existing pipeline stages to this control unit.\n3. Use the output signals (forward_a, forward_b, stall_pipeline, flush_pipeline) to control your datapath components.\n\nHere's an example of how you might instantiate this in your top-level module:\n\n```verilog\npipeline_control pipeline_ctrl (\n    .clk(clk),\n    .reset(reset),\n    .instruction(instr_p),\n    .rs1_addr(rs1_ad_p),\n    .rs2_addr(rs2_ad_p),\n    .ex_rd_addr(rd_ad_p),\n    .ex_reg_write(rdEn_p),\n    .ex_alu_result(aluOut),\n    .mem_rd_addr(rd_ad_p2),\n    .mem_reg_write(rdEn_p2),\n    .mem_result(alu_out_p),\n    .wb_rd_addr(rd_ad_p3),\n    .wb_reg_write(rdEn_p3),\n    .forward_a(ForwardA),\n    .forward_b(ForwardB),\n    .stall_pipeline(stall_pipeline),\n    .flush_pipeline(flush_pipeline)\n);\n```\n\nYou'll need to use these control signals in your datapath:\n\n1. Use ForwardA and ForwardB to control the forwarding multiplexers in your ALU input stage.\n2. Use stall_pipeline to hold the program counter and pipeline registers when a stall is needed.\n3. Use flush_pipeline to clear or invalidate instructions in the pipeline when necessary (e.g., after branch mispredictions).\n\nRemember to adjust the signal names and bit widths as necessary to match your exact implementation. Also, you may need to add additional logic to handle other specific cases in your RISC-V implementation, such as branch prediction and resolution.\n\nIs there anything specific about the pipeline control mechanism you'd like me to explain further or modify, Mehboob?",
+                "date": "12/29/2024, 10:47:36 PM",
+                "delay": 56.9,
+                "metadata": {
+                    "action": "generate",
+                    "vendor": null,
+                    "topic": [],
+                    "anchor": []
+                }
+            }
+        ]
+    },
+    "/pip_ctrl.v": {
+        "/pip_ctrl.v+General": [
+            {
+                "role": "user",
+                "username": "Mehboob Khaliq",
+                "content": "i already have the forwarding unit, but I need another module to control the pipeline that will cause stalls or flush the pipeline if branch is predicted or mispredicted",
+                "date": "12/29/2024, 10:53:26 PM",
+                "delay": 0,
+                "metadata": {}
+            },
+            {
+                "role": "assistant",
+                "username": "RapidGPT",
+                "content": "Certainly, Mehboob! I understand you already have a forwarding unit, and now you're looking to implement a pipeline control module that handles stalls and pipeline flushing for branch prediction and misprediction. This is an important component for improving the performance of your RISC-V processor. Let's design a module to handle these tasks.\n\nHere's a proposed module for pipeline control:\n\n```verilog\nmodule pipeline_control (\n    input wire clk,\n    input wire reset,\n    input wire branch_taken,\n    input wire branch_mispredicted,\n    input wire data_hazard,\n    input wire load_use_hazard,\n    output reg stall_fetch,\n    output reg stall_decode,\n    output reg stall_execute,\n    output reg flush_decode,\n    output reg flush_execute,\n    output reg flush_memory\n);\n\n    always @(posedge clk or posedge reset) begin\n        if (reset) begin\n            stall_fetch <= 1'b0;\n            stall_decode <= 1'b0;\n            stall_execute <= 1'b0;\n            flush_decode <= 1'b0;\n            flush_execute <= 1'b0;\n            flush_memory <= 1'b0;\n        end else begin\n            // Handle branch prediction\n            if (branch_taken) begin\n                stall_fetch <= 1'b0;\n                flush_decode <= 1'b1;\n            end else begin\n                stall_fetch <= 1'b0;\n                flush_decode <= 1'b0;\n            end\n\n            // Handle branch misprediction\n            if (branch_mispredicted) begin\n                stall_fetch <= 1'b0;\n                flush_decode <= 1'b1;\n                flush_execute <= 1'b1;\n                flush_memory <= 1'b1;\n            end else begin\n                flush_execute <= 1'b0;\n                flush_memory <= 1'b0;\n            end\n\n            // Handle data hazards\n            if (data_hazard) begin\n                stall_fetch <= 1'b1;\n                stall_decode <= 1'b1;\n            end else begin\n                stall_decode <= 1'b0;\n            end\n\n            // Handle load-use hazards\n            if (load_use_hazard) begin\n                stall_fetch <= 1'b1;\n                stall_decode <= 1'b1;\n                stall_execute <= 1'b1;\n            end else begin\n                stall_execute <= 1'b0;\n            end\n        end\n    end\n\nendmodule\n```\n\nThis module does the following:\n\n1. It takes inputs for branch taken, branch misprediction, data hazards, and load-use hazards.\n2. It outputs signals to stall different pipeline stages (fetch, decode, execute) and flush pipeline stages (decode, execute, memory).\n\n3. On a branch taken:\n   - It flushes the decode stage to discard the wrong-path instruction.\n\n4. On a branch misprediction:\n   - It flushes the decode, execute, and memory stages to clear all wrong-path instructions.\n\n5. On a data hazard:\n   - It stalls the fetch and decode stages to allow the hazard to resolve.\n\n6. On a load-use hazard:\n   - It stalls the fetch, decode, and execute stages for one cycle to allow the load to complete.\n\nTo integrate this module into your existing design:\n\n1. Instantiate this module in your top-level RISC-V module.\n2. Connect the inputs from your branch predictor, hazard detection unit, and other relevant modules.\n3. Use the output signals to control the stalling and flushing of your pipeline registers.\n\nFor example, in your pipeline stages:\n\n```verilog\nalways @(posedge clk) begin\n    if (reset) begin\n        // Reset logic\n    end else if (!stall_decode) begin\n        // Normal operation for decode stage\n    end\n    \n    if (flush_decode) begin\n        // Flush decode stage (set registers to 0 or NOP instruction)\n    end\nend\n```\n\nRemember to also modify your existing modules (like the forwarding unit, hazard detection unit, and branch predictor) to generate the necessary input signals for this pipeline control module.\n\nIs there anything specific about this pipeline control module you'd like me to explain further or modify, Mehboob?",
+                "date": "12/29/2024, 10:54:17 PM",
+                "delay": 45.9,
+                "metadata": {
+                    "action": "update",
+                    "vendor": null,
+                    "topic": [],
+                    "anchor": []
+                }
+            },
+            {
+                "role": "user",
+                "username": "Mehboob Khaliq",
+                "content": "in the forwardning unit code, will it forward if random bits match?",
+                "date": "12/29/2024, 10:57:02 PM",
+                "delay": 0,
+                "metadata": {}
+            },
+            {
+                "role": "assistant",
+                "username": "RapidGPT",
+                "content": "Mehboob, thank you for your question about the forwarding unit code. Let's take a closer look at the forwarding unit implementation to address your concern about random bits matching.\n\nIn the forwarding unit code you've provided, the forwarding logic is based on specific register address comparisons, not random bit matches. Here's a breakdown of how it works:\n\n1. For EX Hazard (forwarding from the EX/MEM stage):\n   ```verilog\n   if (ex_mem_rdEn && (ex_mem_rd_ad != 5'b00000) && (ex_mem_rd_ad == dec_ex_rs1_ad)) begin\n       ForwardA = 2'b10;\n   end\n   ```\n\n2. For MEM Hazard (forwarding from the MEM/WB stage):\n   ```verilog\n   else if (mem_wb_rdEn && (mem_wb_rd_ad != 5'b00000) && !(ex_mem_rdEn && (ex_mem_rd_ad != 5'b00000) && \n           (ex_mem_rd_ad == dec_ex_rs1_ad)) && (mem_wb_rd_ad == dec_ex_rs1_ad)) begin\n       ForwardA = 2'b01;\n   end\n   ```\n\nIn these comparisons, the unit is checking for exact matches between register addresses (e.g., `ex_mem_rd_ad == dec_ex_rs1_ad`), not random bit patterns. The unit also checks if the register write is enabled (`ex_mem_rdEn` or `mem_wb_rdEn`) and if the destination register is not R0 (`ex_mem_rd_ad != 5'b00000`).\n\nSo, to directly answer your question: No, the forwarding unit will not forward data if random bits happen to match. It only forwards when there's an exact match between the source register address of the instruction in the decode stage and the destination register address of an instruction in the execute or memory stage.\n\nThis design ensures that forwarding only occurs when there's a true data dependency between instructions, preventing incorrect data forwarding that could lead to errors in your pipeline.\n\nIs there a specific part of the forwarding logic you're concerned about, or would you like me to explain any aspect of it in more detail?",
+                "date": "12/29/2024, 10:57:32 PM",
+                "delay": 27.6,
+                "metadata": {
+                    "action": "update",
+                    "vendor": null,
+                    "topic": [],
+                    "anchor": []
+                }
+            },
+            {
+                "role": "user",
+                "username": "Mehboob Khaliq",
+                "content": "what does it mean to flush vs stall a pipeline register?\n",
+                "date": "12/30/2024, 12:40:30 AM",
+                "delay": 0,
+                "metadata": {}
+            },
+            {
+                "role": "assistant",
+                "username": "RapidGPT",
+                "content": "Mehboob, to answer your question about flushing versus stalling a pipeline register, let me explain the key differences:\n\nFlushing a pipeline register:\n\n1. Flushing means clearing or invalidating the contents of a pipeline register.\n2. When you flush a pipeline stage, you essentially discard the instruction or data in that stage.\n3. Flushing is typically used when the processor detects that it has executed instructions along an incorrect path, such as after a branch misprediction.\n4. When flushing occurs, the affected pipeline stages are reset to a known state, usually by inserting NOPs or bubble instructions.\n\nStalling a pipeline register:\n\n1. Stalling means temporarily stopping the progress of instructions through a particular pipeline stage.\n2. When you stall a pipeline stage, you're holding the current instruction in place without discarding it.\n3. Stalling is used when the processor needs to wait for some condition to be met before proceeding, such as waiting for data to be fetched from memory.\n4. During a stall, the affected pipeline stage and all preceding stages are prevented from advancing, while later stages may continue to execute.\n\nKey differences:\n\n1. Data preservation: Flushing discards data, while stalling preserves it.\n2. Recovery: After a flush, the pipeline needs to be refilled with correct instructions. After a stall, execution can resume from where it left off.\n3. Use cases: Flushing is often used for control hazards (like branch mispredictions), while stalling is common for data hazards (like read-after-write dependencies).\n\nIn your pipeline control module, you might implement these concepts like this:\n\n```verilog\nmodule pipeline_control (\n    input wire clk,\n    input wire reset,\n    input wire branch_mispredicted,\n    input wire data_hazard,\n    output reg stall_fetch,\n    output reg flush_decode\n);\n\n    always @(posedge clk or posedge reset) begin\n        if (reset) begin\n            stall_fetch <= 1'b0;\n            flush_decode <= 1'b0;\n        end else begin\n            if (branch_mispredicted) begin\n                flush_decode <= 1'b1;  // Flush the decode stage on misprediction\n            end else begin\n                flush_decode <= 1'b0;\n            end\n\n            if (data_hazard) begin\n                stall_fetch <= 1'b1;  // Stall the fetch stage on data hazard\n            end else begin\n                stall_fetch <= 1'b0;\n            end\n        end\n    end\n\nendmodule\n```\n\nThis example shows how you might flush the decode stage on a branch misprediction and stall the fetch stage on a data hazard. Remember, the specific implementation will depend on your overall pipeline design and the types of hazards you need to handle.\n\nIs there any part of this explanation you'd like me to elaborate on further?",
+                "date": "12/30/2024, 12:41:11 AM",
+                "delay": 34.2,
+                "metadata": {
+                    "action": "documentation",
+                    "vendor": null,
+                    "topic": [],
+                    "anchor": []
+                }
+            },
+            {
+                "role": "user",
+                "username": "Mehboob Khaliq",
+                "content": "module pipeline_control (\n    input wire clk,\n    input wire reset,\n    input wire branch_taken,\n    input wire branch_mispredicted,\n    input wire data_hazard,\n    input wire load_use_hazard,\n\n    // output reg stall_fetch_dec,\n    // output reg stall_dec_ex,\n    // output reg stall_ex_mem,\n    output reg flush_fetch_dec,\n    output reg flush_dec_ex,\n    output reg flush_ex_mem\n);\n\n\nalways @(posedge clk) begin\n    if (reset) begin\n        stall_fetch_dec <= 1'b0;\n        stall_dec_ex <= 1'b0;\n        stall_execute <= 1'b0;\n        flush_fetch_dec <= 1'b0;\n        flush_dec_ex <= 1'b0;\n        flush_ex_mem <= 1'b0;\n    end \n    \n    else begin\n        // Handle branch prediction\n        if (branch_taken) begin\n            flush_fetch_dec <= 1'b1;\n        end else begin\n            // stall_fetch_dec <= 1'b0;\n            flush_ex_mem <= 1'b0;\n        end\n\n        // Handle branch misprediction\n        if (branch_mispredicted) begin\n            stall_fetch_dec <= 1'b0;\n            flush_fetch_dec <= 1'b1;\n            flush_dec_ex <= 1'b1;\n            flush_ex_mem <= 1'b1;\n        end else begin\n            flush_dec_ex <= 1'b0;\n            flush_ex_mem <= 1'b0;\n        end\n\n        // // Handle data hazards\n        // if (data_hazard) begin\n        //     stall_fetch_dec <= 1'b1;\n        //     stall_dec_ex <= 1'b1;\n        // end else begin\n        //     stall_dec_ex <= 1'b0;\n        // end\n\n        // // Handle load-use hazards\n        // if (load_use_hazard) begin\n        //     stall_fetch_dec <= 1'b1;\n        //     stall_dec_ex <= 1'b1;\n        //     stall_execute <= 1'b1;\n        // end else begin\n        //     stall_execute <= 1'b0;\n        // end\n    end\nend\n\nendmodule\n\n\n\n\nis the following code better:\n\nif (branch_mispredicted) begin\n    // Prioritize branch misprediction\n    flush_fetch_dec <= 1'b1;\n    flush_dec_ex <= 1'b1;\n    flush_ex_mem <= 1'b1;\nend else if (branch_taken) begin\n    // Handle normal branch\n    flush_fetch_dec <= 1'b1;\n    flush_dec_ex <= 1'b0;\n    flush_ex_mem <= 1'b0;\nend else begin\n    // Default state\n    flush_fetch_dec <= 1'b0;\n    flush_dec_ex <= 1'b0;\n    flush_ex_mem <= 1'b0;\nend",
+                "date": "12/30/2024, 1:42:38 AM",
+                "delay": 0,
+                "metadata": {}
+            },
+            {
+                "role": "assistant",
+                "username": "RapidGPT",
+                "content": "Yes, Mehboob, the code you've suggested is indeed better. Let me explain why:\n\n1. Prioritization: Your suggested code prioritizes branch misprediction over branch taken. This is correct because a branch misprediction is a more severe condition that requires immediate correction.\n\n2. Clarity: The structure of if-else if-else makes the logic flow clearer and easier to understand. It shows a clear hierarchy of conditions and actions.\n\n3. Completeness: Each condition sets all the flush signals explicitly, leaving no ambiguity about their states in different scenarios.\n\n4. Correctness: In the case of a normal branch taken (not mispredicted), only flush_fetch_dec is set to 1, while the others are explicitly set to 0. This is correct because you only need to flush the fetch stage when a branch is taken correctly.\n\n5. Default state: The else clause provides a clear default state where all flush signals are set to 0 when there's no branch taken or mispredicted.\n\nYour original code had some inconsistencies and potential issues:\n\n- It was setting stall_fetch_dec to 0 in case of a branch misprediction, which might not be correct.\n- The handling of flush_ex_mem was inconsistent between branch taken and branch mispredicted cases.\n- It didn't have a clear default state for when neither branch_taken nor branch_mispredicted was true.\n\nThe new code resolves these issues and provides a more logical and consistent approach to handling branch prediction and misprediction in your pipeline control.\n\nOne small suggestion: You might want to add comments explaining the purpose of each flush in different scenarios, especially for readers who might not be familiar with your specific pipeline implementation. For example:\n\n```verilog\nif (branch_mispredicted) begin\n    // Flush all stages due to misprediction\n    flush_fetch_dec <= 1'b1;\n    flush_dec_ex <= 1'b1;\n    flush_ex_mem <= 1'b1;\nend else if (branch_taken) begin\n    // Flush only fetch stage for correct branch prediction\n    flush_fetch_dec <= 1'b1;\n    flush_dec_ex <= 1'b0;\n    flush_ex_mem <= 1'b0;\nend else begin\n    // No flush needed in normal operation\n    flush_fetch_dec <= 1'b0;\n    flush_dec_ex <= 1'b0;\n    flush_ex_mem <= 1'b0;\nend\n```\n\nThis improved code will make your pipeline control more robust and easier to understand and maintain.",
+                "date": "12/30/2024, 1:43:15 AM",
+                "delay": 33.1,
+                "metadata": {
+                    "action": "documentation",
+                    "vendor": null,
+                    "topic": [],
+                    "anchor": []
+                }
+            },
+            {
+                "role": "user",
+                "username": "Mehboob Khaliq",
+                "content": "always @(*) begin\n\n    // Handle branch prediction\n    if (branch_mispredicted) begin\n        // Prioritize branch misprediction\n        flush_fetch_dec <= 1'b1;\n        flush_dec_ex <= 1'b1;\n        flush_ex_mem <= 1'b1;\n    end else if (branch_taken) begin\n        // Handle normal branch\n        flush_fetch_dec <= 1'b1;\n        flush_dec_ex <= 1'b0;\n        flush_ex_mem <= 1'b0;\n    end else begin\n        // Default state\n        flush_fetch_dec <= 1'b0;\n        flush_dec_ex <= 1'b0;\n        flush_ex_mem <= 1'b0;\n    end\n\nwhat if I want it combinational?\ndoes this work",
+                "date": "12/30/2024, 2:10:38 AM",
+                "delay": 0,
+                "metadata": {}
+            },
+            {
+                "role": "assistant",
+                "username": "RapidGPT",
+                "content": "Yes, Mehboob, the code you've shown is already combinational. Let me explain why:\n\n1. Combinational logic: The `always @(*)` block you've provided is indeed a combinational block. The `@(*)` sensitivity list means this block will be evaluated whenever any of the signals it depends on changes, which is characteristic of combinational logic.\n\n2. Continuous assignment: Inside this block, you're using blocking assignments (`<=`), which are appropriate for combinational logic in this context. While non-blocking assignments (`<=`) are typically used for sequential logic, in a combinational `always @(*)` block, they behave the same as blocking assignments (`=`).\n\n3. Priority logic: Your code implements a priority-based decision structure, which is perfectly valid for combinational logic. It prioritizes branch misprediction over branch taken, and provides a default case when neither condition is true.\n\n4. Outputs: The outputs (`flush_fetch_dec`, `flush_dec_ex`, `flush_ex_mem`) are assigned in all possible cases, ensuring that they always have defined values.\n\nIf you want to make it explicitly clear that this is combinational logic, you could make a few minor modifications:\n\n1. Use blocking assignments (`=`) instead of non-blocking (`<=`).\n2. You could also use a `case` statement instead of `if-else` for potentially better synthesis results, though this is not strictly necessary.\n\nHere's how you could rewrite it:\n\n```verilog\nalways @(*) begin\n    // Default state\n    flush_fetch_dec = 1'b0;\n    flush_dec_ex = 1'b0;\n    flush_ex_mem = 1'b0;\n\n    case (1'b1) // Case 1'b1 is a common idiom for priority casez\n        branch_mispredicted: begin\n            // Prioritize branch misprediction\n            flush_fetch_dec = 1'b1;\n            flush_dec_ex = 1'b1;\n            flush_ex_mem = 1'b1;\n        end\n        branch_taken: begin\n            // Handle normal branch\n            flush_fetch_dec = 1'b1;\n        end\n        default: begin\n            // Default state is already set\n        end\n    endcase\nend\n```\n\nThis version is functionally equivalent to your original code but uses blocking assignments and a case statement to make it clear that it's combinational logic. The default values are set at the beginning, and then overwritten as necessary based on the conditions.\n\nRemember, in actual hardware, this will synthesize to a priority encoder-like structure, where branch_mispredicted takes precedence over branch_taken.\n\nIs there anything else about this combinational logic that you'd like me to clarify or explain further?",
+                "date": "12/30/2024, 2:11:17 AM",
+                "delay": 32.4,
+                "metadata": {
+                    "action": "documentation",
                     "vendor": null,
                     "topic": [],
                     "anchor": []

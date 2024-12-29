@@ -1,6 +1,8 @@
 module pip_ex_mem (
     input clk,
     input pip_en,
+    input discard,
+
     input [31:0] alu_out,
     input [31:0] rs2,
 
@@ -29,7 +31,7 @@ module pip_ex_mem (
 );
 
 always @(posedge clk ) begin
-    if(pip_en) begin
+    if(pip_en && !discard) begin
         rs1_ad_p <= rs1_ad;
         rs2_ad_p <= rs2_ad;
         rd_ad_p <= rd_ad;
@@ -43,6 +45,22 @@ always @(posedge clk ) begin
 
         rdmuxSel_p <= rdmuxSel;
     end
+
+    else if(pip_en && discard) begin
+        rs1_ad_p <= 0;
+        rs2_ad_p <= 0;
+        rd_ad_p <= 0;
+        DMwriteEn_p <= 0;
+        DMread_p <= 0;
+        rdEn_p <= 0;
+
+        alu_out_p <= 0;
+        rs2_p <= 0;
+        DM_ctrl_p <= 0;
+
+        rdmuxSel_p <= 0;
+    end
+
 end
     
 endmodule
