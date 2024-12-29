@@ -34,7 +34,7 @@ wire rdEn_p, rdEn_p2, rdEn_p3;
 wire rs1_read_p, rs1_read_p2;
 wire rs2_read_p, rs2_read_p2;
 wire DMwriteEn_p, DMwriteEn_p2;
-wire DMread_p, DMread_p2;
+wire DMread_p, DMread_p2, DMread_p3;
 wire [3:0] aluCont_p;
 wire [2:0] DM_ctrl_p, DM_ctrl_p2;
 wire aluMux1Sel_p, aluMux2sel_p;
@@ -196,17 +196,22 @@ aluFmux f2(
 );
 
 wire [1:0] ForwardA, ForwardB;
+wire ForwardC;
 wire [31:0] A2F;
 
 forwardingUnit fu1(
     .dec_ex_rs1_ad(rs1_ad_p),
     .dec_ex_rs2_ad(rs2_ad_p),
+    .ex_mem_rs2_ad(rs2_ad_p2),
     .ex_mem_rd_ad(rd_ad_p2),
-    .mem_wd_rd_ad(rd_ad_p3),
+    .mem_wb_rd_ad(rd_ad_p3),
     .ex_mem_rdEn(rdEn_p2),
     .mem_wb_rdEn(rdEn_p3),
+    .ex_mem_DMwriteEn(DMwriteEn_p2),
+    .mem_wb_DMread(DMread_p3),
     .ForwardA(ForwardA),
-    .ForwardB(ForwardB)
+    .ForwardB(ForwardB),
+    .ForwardC(ForwardC)
 );
 
 pip_ex_mem p3(
@@ -241,13 +246,21 @@ pip_ex_mem p3(
     .rdmuxSel_p(rdmuxSel_p2)   
 );
 
+dmemFmux f3(
+    .sel(ForwardC),
+    .A(rs2_p2),
+    .B(rd_p),
+    .out(toDmem)
+);
+
+wire [31:0] toDmem;
 
 datamem DataMem(        //fix
     .clk(clk),
     .writeEn(DMwriteEn_p2),
     .addr(alu_out_p),
     .func3(DM_ctrl_p2),
-    .storeVal(rs2_p2),
+    .storeVal(toDmem),
     .loadVal(dmLoad)
 );
 
@@ -260,7 +273,7 @@ rdmux rdMux(
     .rd(rd)
 );
 
-pip_mem_wb p3 (
+pip_mem_wb p4 (
     .clk(clk),
     
     .rd(rd),
@@ -269,13 +282,15 @@ pip_mem_wb p3 (
     .rs2_ad(rs2_ad_p2),
     .rd_ad(rd_ad_p2),
     .rdEn(rdEn_p2),
+    .DMread(DMread_p2)
     
     .rd_p(rd_p),
     
     .rs1_ad_p(rs1_ad_p3),
     .rs2_ad_p(rs2_ad_p3),
     .rd_ad_p(rd_ad_p3),
-    .rdEn_p(rdEn_p3)
+    .rdEn_p(rdEn_p3),
+    .DMread_p(DMread_p3)
 );
 
 
