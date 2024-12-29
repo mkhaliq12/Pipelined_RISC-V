@@ -1,29 +1,26 @@
 module pip_mem_wb (
     input clk,
-    input [31:0] alu_out,
-    input [31:0] dmem_out,
+    input [31:0] rd,
 
-    input [4:0] rs1,
-    input [4:0] rs2,
-    input [4:0] rd,
+    input [4:0] rs1_ad,        //only rd needed I think
+    input [4:0] rs2_ad,
+    input [4:0] rd_ad,
     input rdEn,
 
-    output reg [31:0] alu_out_p,
-    output reg [31:0] dmem_out_p,
+    output reg [31:0] rd_p,
 
-    output reg [4:0] rs1_p,
-    output reg [4:0] rs2_p,
-    output reg [4:0] rd_p,
+    output reg [4:0] rs1_ad_p,
+    output reg [4:0] rs2_ad_p,
+    output reg [4:0] rd_ad_p,
     output reg rdEn_p
 
 );
 
 always @(posedge clk) begin
-    alu_out_p <= alu_out;
-    dmem_out_p <= dmem_out;
-    rs1_p <= rs1;
-    rs2_p <= rs2;
     rd_p <= rd;
+    rs1_ad_p <= rs1_ad;
+    rs2_ad_p <= rs2_ad;
+    rd_ad_p <= rd_ad;
     rdEn_p <= rdEn;
 end
     
