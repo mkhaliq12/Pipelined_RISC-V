@@ -10,33 +10,27 @@ module cache (
     output reg busy
 );
 
-// Cache structure (2-way set associative)
-reg [0:0] valid [3:0][1:0];      // 4 sets, 2 ways, 1 valid bit each
-reg [25:0] tags [3:0][1:0];      // 26-bit tags
-reg [31:0] data [3:0][1:0];      // 32-bit data
-reg [2:0] age [3:0][1:0];        // LRU counter (3-bit)
+reg [0:0] valid [3:0][1:0];      
+reg [25:0] tags [3:0][1:0];      
+reg [31:0] data [3:0][1:0];      
+reg [2:0] age [3:0][1:0];        
 
-// Add hit counter
 reg [31:0] hit_count;
 
-// State machine
 reg [1:0] state;
 localparam IDLE = 2'b00;
 localparam READ = 2'b01;
 localparam WRITE = 2'b10;
 
-// Cache line selection
 reg replace_way;
-wire [25:0] tag = addr[31:6];    // Tag bits
-wire [1:0] set_index = addr[5:4]; // Set index bits
+wire [25:0] tag = addr[31:6];    
+wire [1:0] set_index = addr[5:4]; 
 wire addr_valid = (addr[1:0] == 2'b00);  // Word alignment check
 
-// Memory interface
 wire [31:0] mem_data;
 wire mem_data_ready;
 reg mem_write_en;
 
-// Initial state
 integer i, j;
 initial begin
     for(i = 0; i < 4; i = i + 1) begin
@@ -45,6 +39,9 @@ initial begin
             tags[i][j] = 0;
             data[i][j] = 0;
             age[i][j] = 0;
+            if (j == 1) begin
+                age[i][j] = 3'b111; // Initial age of Way 1 is maximum (7)
+            end
         end
     end
     state = IDLE;
@@ -55,7 +52,6 @@ initial begin
     hit_count = 0;
 end
 
-// Memory interface
 datamem main_memory(
     .clk(clk),
     .reset(reset),
@@ -67,7 +63,6 @@ datamem main_memory(
     .data_ready(mem_data_ready)
 );
 
-// Main control logic
 always @(posedge clk or posedge reset) begin
     if (reset) begin
         state <= IDLE;
@@ -93,14 +88,17 @@ always @(posedge clk or posedge reset) begin
                 hit <= 0;
 
                 if (addr_valid) begin
-                    // Check both ways for hit
+
                     if (valid[set_index][0] && tags[set_index][0] == tag) begin
                         hit_count <= hit_count + 1;
                         hit <= 1;
                         read_data <= data[set_index][0];
-                        age[set_index][0] <= 0;
-                        age[set_index][1] <= age[set_index][1] + 1;
-                        
+                        age[set_index][0] <= 0; 
+
+                        if (age[set_index][1] < 3'b111) begin
+                            age[set_index][1] <= age[set_index][1] + 1;
+                        end
+
                         if (write_en) begin
                             data[set_index][0] <= write_data;
                             mem_write_en <= 1;
@@ -113,8 +111,11 @@ always @(posedge clk or posedge reset) begin
                         hit <= 1;
                         read_data <= data[set_index][1];
                         age[set_index][1] <= 0;
-                        age[set_index][0] <= age[set_index][0] + 1;
-                        
+
+                        if (age[set_index][0] < 3'b111) begin
+                            age[set_index][0] <= age[set_index][0] + 1;
+                        end
+
                         if (write_en) begin
                             data[set_index][1] <= write_data;
                             mem_write_en <= 1;
@@ -123,27 +124,40 @@ always @(posedge clk or posedge reset) begin
                         end
                     end
                     else begin
-                        // Cache miss
+
                         hit <= 0;
                         busy <= 1;
                         state <= READ;
-                        // Select replacement way
-                        replace_way <= (!valid[set_index][0]) ? 1'b0 :
-                                     (!valid[set_index][1]) ? 1'b1 :
-                                     (age[set_index][0] > age[set_index][1]) ? 1'b0 : 1'b1;
                     end
                 end
             end
 
             READ: begin
                 if (mem_data_ready) begin
-                    valid[set_index][replace_way] <= 1'b1;
-                    tags[set_index][replace_way] <= tag;
-                    data[set_index][replace_way] <= mem_data;
-                    read_data <= mem_data;
-                    
-                    age[set_index][replace_way] <= 0;
-                    age[set_index][~replace_way] <= age[set_index][~replace_way] + 1;
+
+                    if (age[set_index][0] > age[set_index][1]) begin
+                        valid[set_index][0] <= 1'b1;
+                        tags[set_index][0] <= tag;
+                        data[set_index][0] <= mem_data;
+                        read_data <= mem_data;
+
+                        age[set_index][0] <= 0; 
+
+                        if (age[set_index][1] < 3'b111) begin
+                            age[set_index][1] <= age[set_index][1] + 1;
+                        end
+                    end else begin
+                        valid[set_index][1] <= 1'b1;
+                        tags[set_index][1] <= tag;
+                        data[set_index][1] <= mem_data;
+                        read_data <= mem_data;
+
+                        age[set_index][1] <= 0; 
+
+                        if (age[set_index][0] < 3'b111) begin
+                            age[set_index][0] <= age[set_index][0] + 1;
+                        end
+                    end
 
                     state <= IDLE;
                     busy <= 0;

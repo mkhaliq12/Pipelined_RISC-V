@@ -37,4 +37,3 @@ assign rs2 = registers[rs2sel];
 assign out = registers[31];
 
 endmodule
-

@@ -1,11 +1,12 @@
 module datamem(
-    input wire clk,
-    input wire reset,
-    input wire writeEn,
-    input wire [31:0] addr,
-    input wire [2:0] func3,
-    input wire [31:0] storeVal,
-    output reg [31:0] loadVal,
+    input clk,
+    input reset,
+    input writeEn,
+    input [31:0]addr,
+    input wire[2:0]func3,
+    input wire[31:0] storeVal,      //rs2
+    output reg[31:0] loadVal,
+    
     output reg data_ready
 );
 
@@ -41,5 +42,3 @@ always @(posedge clk or posedge reset) begin
 end
 
 endmodule
-
-//https://stackoverflow.com/questions/4176556/how-to-sign-extend-a-number-in-verilog

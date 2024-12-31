@@ -12,4 +12,3 @@ always @(posedge clk ) begin
     else count <= count + 4;
 end
 endmodule
-
